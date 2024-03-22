@@ -6,9 +6,11 @@ import time
 from random import choice
 
 BOT_TOKEN = "6738472088:AAEoKitKwg6ACoomXgppzp3IQpXd43zMDgA"
-find_city = ['москва', 'одинцово', 'санкт-петербург', 'великий новгород', 'нижний новгород', 'кострома', 'киров', 'сочи', 'париж', 'вена',
-             'анапа', 'калининград', 'красноярск', 'рязань', 'казань', 'псков', 'рим', 'изборск', 'лос-анджелес', 'нью-йорк', 'лондон', 'марсель', 'стокгольм', 'крым', 'севастополь']
-# Запускаем логгирование
+find_city = ['москва', 'одинцово', 'санкт-петербург', 'великий новгород', 'нижний новгород', 'кострома', 'киров',
+             'сочи', 'париж', 'вена',
+             'анапа', 'калининград', 'красноярск', 'рязань', 'казань', 'псков', 'рим', 'изборск', 'лос-анджелес',
+             'нью-йорк', 'лондон', 'марсель', 'стокгольм', 'крым', 'севастополь', 'мексика', 'китай', 'япония', 'тула',
+             'ростов-на-дону', 'пекин', 'орландо', 'мадрид', 'венеция', 'милан', 'барселона']
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG
 )
@@ -22,8 +24,7 @@ markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
 async def start(update, context):
     user = update.effective_user
     await update.message.reply_html(
-        rf"Привет {user.mention_html()}! Я бот!",
-    )
+        rf"Привет {user.mention_html()}! Я бот! Напиши или выбери команду из меню")
 
 
 async def echo(update, context):
@@ -43,7 +44,7 @@ async def reader_find(update, context):
         with open('money.txt', 'rt') as f:
             f = f.read()
         with open('money.txt', 'w') as f1:
-            f1.write(str(int(f[0].strip()) + 50))
+            f1.write(str(int(f.strip()) + 50))
     else:
         await update.message.reply_text(f"Это неправильный ответ, это {city.capitalize()}\n"
                                         f"Хочешь продолжить игру? Нажми на кнопку", reply_markup=markup)
@@ -62,12 +63,20 @@ async def find(update, context):
         print('отправлено')
         return 2
     else:
-        await update.message.reply_text("Пока, ждем в гости! Вызывай новую команду, как понадоблюсь", reply_markup=ReplyKeyboardRemove())
+        await update.message.reply_text("Пока, ждем в гости! Вызывай новую команду, как понадоблюсь",
+                                        reply_markup=ReplyKeyboardRemove())
         return ConversationHandler.END
 
 
+async def money(update, context):
+    with open('money.txt', 'rt') as f:
+        f = f.read()
+    await update.message.reply_text(f)
+
+
 async def stop(update, context):
-    await update.message.reply_text("Пока, ждем в гости! Вызывай новую команду, как понадоблюсь", reply_markup=ReplyKeyboardRemove())
+    await update.message.reply_text("Пока, ждем в гости! Вызывай новую команду, как понадоблюсь",
+                                    reply_markup=ReplyKeyboardRemove())
     return ConversationHandler.END
 
 
@@ -75,7 +84,8 @@ def main():
     app = Application.builder().token(token=BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help_command))
-    #app.add_handler(CommandHandler("find", find))
+    app.add_handler(CommandHandler("money", money))
+    # app.add_handler(CommandHandler("find", find))
     app.add_handler(CommandHandler("play", help_command))
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('find', find)],
