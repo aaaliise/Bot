@@ -11,14 +11,17 @@ find_city = ['москва', 'одинцово', 'санкт-петербург'
              'анапа', 'калининград', 'красноярск', 'рязань', 'казань', 'псков', 'рим', 'изборск', 'лос-анджелес',
              'нью-йорк', 'лондон', 'марсель', 'стокгольм', 'крым', 'севастополь', 'мексика', 'китай', 'япония', 'тула',
              'ростов-на-дону', 'пекин', 'орландо', 'мадрид', 'венеция', 'милан', 'барселона']
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG
-)
+logging.basicConfig(filename='example2.log',
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG
+                    )
 
 logger = logging.getLogger(__name__)
 
 reply_keyboard = [['Да', 'Нет']]
 markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
+
+casino1_keyboard = [['50', '10', '100'], ['30', '5', '200'], ['70', '600', '20']]
+markup1 = ReplyKeyboardMarkup(casino1_keyboard, one_time_keyboard=False)
 
 
 async def start(update, context):
@@ -32,7 +35,8 @@ async def echo(update, context):
 
 
 async def help_command(update, context):
-    await update.message.reply_text("Я пока не умею помогать...")
+    await update.message.reply_text(
+        "Я не умею помогать,\nИ в том признаться не боюсь,\nНо, чтобы время не терять,\nЯ помогать учусь.\nИ пусть не получается пока,\nНо я так быстро не сдаюсь,\nЯ научусь наверняка.\nМогу дать слово, только попроси...")
 
 
 async def reader_find(update, context):
@@ -74,6 +78,33 @@ async def money(update, context):
     await update.message.reply_text(f)
 
 
+async def casino(update, context):
+    await update.message.reply_text("Выбери ставку",
+                                    reply_markup=markup1)
+    return 2
+
+
+async def casino2(update, context):
+    text = update.message.text
+    comand = choice(['1', '2'])
+    if text:
+        if comand == '1':
+            with open('money.txt', 'rt') as f:
+                f = f.read()
+            with open('money.txt', 'w') as f1:
+                f1.write(f'{int(f) * int(text)}')
+            await update.message.reply_text(f"Ты везучий. Твои деньги увеличились в {text} раз",
+                                            reply_markup=ReplyKeyboardRemove())
+        else:
+            with open('money.txt', 'rt') as f:
+                f = f.read()
+            with open('money.txt', 'w') as f1:
+                f1.write(f'{int(f) // int(text)}')
+            await update.message.reply_text(f"Ну, что ж, не повезло. Твои деньги уменьшились в {text} раз",
+                                            reply_markup=ReplyKeyboardRemove())
+    return 1
+
+
 async def stop(update, context):
     await update.message.reply_text("Пока, ждем в гости! Вызывай новую команду, как понадоблюсь",
                                     reply_markup=ReplyKeyboardRemove())
@@ -85,6 +116,7 @@ def main():
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("money", money))
+    #app.add_handler(CommandHandler("casino", casino))
     # app.add_handler(CommandHandler("find", find))
     app.add_handler(CommandHandler("play", help_command))
     conv_handler = ConversationHandler(
@@ -95,8 +127,17 @@ def main():
         },
         fallbacks=[CommandHandler('stop', stop)]
     )
+    conv_handler1 = ConversationHandler(
+        entry_points=[CommandHandler('casino', casino)],
+        states={
+            1: [MessageHandler(filters.TEXT & ~filters.COMMAND, casino)],
+            2: [MessageHandler(filters.TEXT & ~filters.COMMAND, casino2)]
+        },
+        fallbacks=[CommandHandler('stop', stop)]
+    )
 
     app.add_handler(conv_handler)
+    app.add_handler(conv_handler1)
     text_handler = MessageHandler(filters.TEXT, echo)
     app.add_handler(text_handler)
     app.run_polling()
