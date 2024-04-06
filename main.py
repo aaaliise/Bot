@@ -16,6 +16,7 @@ logging.basicConfig(filename='example2.log',
                     )
 
 logger = logging.getLogger(__name__)
+list_for_joke = ['A', '12']
 
 reply_keyboard = [['Да', 'Нет']]
 markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
@@ -28,7 +29,8 @@ async def start(update, context):
     chat_id = update.effective_message.chat_id
     user = update.effective_user
     await context.bot.send_photo(chat_id, 'data/orig.webp', reply_markup=ReplyKeyboardRemove(), caption=f"Привет! Я бот!\nЯ Напиши или выбери команду из меню")
-
+    #await update.message.reply_html(
+        #rf"Привет {user.mention_html()}! Я бот! Напиши или выбери команду из меню")
 
 
 async def echo(update, context):
@@ -106,6 +108,26 @@ async def casino2(update, context):
     return 1
 
 
+async def music(update, context):
+    chat_id = update.effective_message.chat_id
+    await context.bot.send_audio(chat_id, 'data/music.mp3')
+
+
+async def joke(update, context):
+    await update.message.reply_text('Введите акционнерный код:')
+    return 2
+
+
+async def joke2(update, context):
+    if update.message.text in list_for_joke:
+        with open('money.txt', 'rt') as f:
+            f = f.read()
+        with open('money.txt', 'w') as f1:
+            f1.write(f'{int(f) + 50}')
+        await update.message.reply_text(f"Ты использовал свой купон и получил 50🪙")
+    return 1
+
+
 async def stop(update, context):
     await update.message.reply_text("Пока, ждем в гости! Вызывай новую команду, как понадоблюсь",
                                     reply_markup=ReplyKeyboardRemove())
@@ -120,6 +142,7 @@ def main():
     #app.add_handler(CommandHandler("casino", casino))
     # app.add_handler(CommandHandler("find", find))
     app.add_handler(CommandHandler("play", help_command))
+    app.add_handler(CommandHandler("music", music))
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('find', find)],
         states={
@@ -136,9 +159,17 @@ def main():
         },
         fallbacks=[CommandHandler('stop', stop)]
     )
-
+    conv_handler2 = ConversationHandler(
+        entry_points=[CommandHandler('joke', find)],
+        states={
+            1: [MessageHandler(filters.TEXT & ~filters.COMMAND, joke)],
+            2: [MessageHandler(filters.TEXT & ~filters.COMMAND, joke2)]
+        },
+        fallbacks=[CommandHandler('stop', stop)]
+    )
     app.add_handler(conv_handler)
     app.add_handler(conv_handler1)
+    app.add_handler(conv_handler2)
     text_handler = MessageHandler(filters.TEXT, echo)
     app.add_handler(text_handler)
     app.run_polling()
