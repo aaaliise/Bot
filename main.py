@@ -25,9 +25,10 @@ markup1 = ReplyKeyboardMarkup(casino1_keyboard, one_time_keyboard=False)
 
 
 async def start(update, context):
+    chat_id = update.effective_message.chat_id
     user = update.effective_user
-    await update.message.reply_html(
-        rf"Привет {user.mention_html()}! Я бот! Напиши или выбери команду из меню")
+    await context.bot.send_photo(chat_id, 'data/orig.webp', reply_markup=ReplyKeyboardRemove(), caption=f"Привет! Я бот!\nЯ Напиши или выбери команду из меню")
+
 
 
 async def echo(update, context):
