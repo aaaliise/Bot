@@ -16,7 +16,7 @@ logging.basicConfig(filename='example2.log',
                     )
 
 logger = logging.getLogger(__name__)
-list_for_joke = ['A', '12']
+list_for_joke = ['A', '12', '24.04.24']
 
 reply_keyboard = [['Да', 'Нет']]
 markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
@@ -161,7 +161,7 @@ def main():
     )
     print('да')
     conv_handler2 = ConversationHandler(
-        entry_points=[CommandHandler('joke', find)],
+        entry_points=[CommandHandler('joke', joke)],
         states={
             5: [MessageHandler(filters.TEXT & ~filters.COMMAND, joke)],
             6: [MessageHandler(filters.TEXT & ~filters.COMMAND, joke2)]
