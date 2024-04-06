@@ -84,7 +84,7 @@ async def money(update, context):
 async def casino(update, context):
     await update.message.reply_text("Выбери ставку",
                                     reply_markup=markup1)
-    return 2
+    return 4
 
 
 async def casino2(update, context):
@@ -105,7 +105,7 @@ async def casino2(update, context):
                 f1.write(f'{int(f) // int(text)}')
             await update.message.reply_text(f"Ну, что ж, не повезло. Твои деньги уменьшились в {text} раз",
                                             reply_markup=ReplyKeyboardRemove())
-    return 1
+    return 3
 
 
 async def music(update, context):
@@ -115,7 +115,7 @@ async def music(update, context):
 
 async def joke(update, context):
     await update.message.reply_text('Введите акционнерный код:')
-    return 2
+    return 6
 
 
 async def joke2(update, context):
@@ -125,7 +125,7 @@ async def joke2(update, context):
         with open('money.txt', 'w') as f1:
             f1.write(f'{int(f) + 50}')
         await update.message.reply_text(f"Ты использовал свой купон и получил 50🪙")
-    return 1
+    return 5
 
 
 async def stop(update, context):
@@ -154,16 +154,17 @@ def main():
     conv_handler1 = ConversationHandler(
         entry_points=[CommandHandler('casino', casino)],
         states={
-            1: [MessageHandler(filters.TEXT & ~filters.COMMAND, casino)],
-            2: [MessageHandler(filters.TEXT & ~filters.COMMAND, casino2)]
+            3: [MessageHandler(filters.TEXT & ~filters.COMMAND, casino)],
+            4: [MessageHandler(filters.TEXT & ~filters.COMMAND, casino2)]
         },
         fallbacks=[CommandHandler('stop', stop)]
     )
+    print('да')
     conv_handler2 = ConversationHandler(
         entry_points=[CommandHandler('joke', find)],
         states={
-            1: [MessageHandler(filters.TEXT & ~filters.COMMAND, joke)],
-            2: [MessageHandler(filters.TEXT & ~filters.COMMAND, joke2)]
+            5: [MessageHandler(filters.TEXT & ~filters.COMMAND, joke)],
+            6: [MessageHandler(filters.TEXT & ~filters.COMMAND, joke2)]
         },
         fallbacks=[CommandHandler('stop', stop)]
     )
