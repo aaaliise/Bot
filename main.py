@@ -1,7 +1,13 @@
 import logging
 from telegram.ext import Application, MessageHandler, filters, CommandHandler, ConversationHandler
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
+import sqlalchemy
+from flask_login import UserMixin
+from sqlalchemy import orm
+from sqlalchemy_serializer import SerializerMixin
+from werkzeug.security import generate_password_hash, check_password_hash
 import datetime as dt
+#from .db_session import SqlAlchemyBase
 import time
 from random import choice
 
@@ -29,6 +35,7 @@ async def start(update, context):
     chat_id = update.effective_message.chat_id
     user = update.effective_user
     await context.bot.send_photo(chat_id, 'data/orig.webp', reply_markup=ReplyKeyboardRemove(), caption=f"Привет! Я бот!\nЯ Напиши или выбери команду из меню")
+    #await context.bot.forward_message(chat_id, '-4199349308', update.message.message_id)
     #await update.message.reply_html(
         #rf"Привет {user.mention_html()}! Я бот! Напиши или выбери команду из меню")
 
@@ -43,11 +50,13 @@ async def help_command(update, context):
 
 
 async def reader_find(update, context):
+    chat_id = update.effective_message.chat_id
     city = context.user_data['city']
     print(update.message.text.strip().lower(), city)
     if update.message.text.lower() == city:
         await update.message.reply_text(f"Да, это правильно, получи 50🪙\n"
                                         f"Хочешь продолжить игру? Нажми на кнопку", reply_markup=markup)
+
         with open('money.txt', 'rt') as f:
             f = f.read()
         with open('money.txt', 'w') as f1:
@@ -66,7 +75,7 @@ async def find(update, context):
         city = choice(find_city)
         context.user_data['city'] = city
         print(city)
-        await context.bot.send_photo(chat_id, f'data/{city}.jpg', reply_markup=ReplyKeyboardRemove())
+        await context.bot.send_photo(chat_id, f'data/{city}.jpg', reply_markup=ReplyKeyboardRemove(), caption='Что это за город?')
         print('отправлено')
         return 2
     else:
@@ -134,6 +143,33 @@ async def stop(update, context):
     return ConversationHandler.END
 
 
+#class Table0(SqlAlchemyBase, UserMixin, SerializerMixin):
+#    __tablename__ = 'user'
+#
+#    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
+#    user_id = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
+#
+#
+#class Table1(SqlAlchemyBase, UserMixin, SerializerMixin):
+#    __tablename__ = 'date_user'
+#
+#    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
+#    user_id = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
+#    name = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+#    surname = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+#
+#
+#class Table2(SqlAlchemyBase, UserMixin, SerializerMixin):
+#    __tablename__ = 'money_user'
+#
+#    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
+#    user_id = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
+#    money = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
+
+
+
+
+
 def main():
     app = Application.builder().token(token=BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
@@ -159,7 +195,6 @@ def main():
         },
         fallbacks=[CommandHandler('stop', stop)]
     )
-    print('да')
     conv_handler2 = ConversationHandler(
         entry_points=[CommandHandler('joke', joke)],
         states={
