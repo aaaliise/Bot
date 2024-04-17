@@ -11,6 +11,7 @@ import datetime as dt
 import time
 from random import choice
 
+
 BOT_TOKEN = "6738472088:AAEoKitKwg6ACoomXgppzp3IQpXd43zMDgA"
 find_city = ['москва', 'одинцово', 'санкт-петербург', 'великий новгород', 'нижний новгород', 'кострома', 'киров',
              'сочи', 'париж', 'вена',
