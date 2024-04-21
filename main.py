@@ -2,7 +2,6 @@ import logging
 from telegram.ext import Application, MessageHandler, filters, CommandHandler, ConversationHandler
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 from random import choice
-import os
 import sys
 import requests
 from scripts import db_session
@@ -10,21 +9,24 @@ from scripts.user import User
 from scripts.date_user import Date_user
 from scripts.money_user import Money_user
 
-# user = User()
-# user.name = "Пользователь 1"
-# user.about = "биография пользователя 1"
-# user.email = "email@email.ru"
-# db_sess = db_session.create_session()
-# db_sess.add(user)
-# db_sess.commit()
-
 
 BOT_TOKEN = "6738472088:AAEoKitKwg6ACoomXgppzp3IQpXd43zMDgA"
-find_city = ['москва', 'одинцово', 'санкт-петербург', 'великий новгород', 'нижний новгород', 'кострома', 'киров',
-             'сочи', 'париж', 'вена',
-             'анапа', 'калининград', 'красноярск', 'рязань', 'казань', 'псков', 'рим', 'изборск', 'лос-анджелес',
-             'нью-йорк', 'лондон', 'марсель', 'стокгольм', 'крым', 'севастополь', 'мексика', 'китай', 'япония', 'тула',
-             'ростов-на-дону', 'пекин', 'орландо', 'мадрид', 'венеция', 'милан', 'барселона']
+find_city = [['москва', '37.520657,55.650667'], ['одинцово', '37.278230,55.678740'],
+             ['санкт-петербург', '30.092569,59.940675'], ['великий новгород', '31.310137,58.560956'],
+             ['нижний новгород', '43.833528,56.304645'], ['кострома', '40.901099,57.796071'],
+             ['киров', '49.570865,58.583540'],
+             ['сочи', '39.580041,43.713351'], ['париж', '2.347042,48.858823'], ['вена', '16.376247,48.216271'],
+             ['анапа', '37.313574,44.921751'], ['калининград', '20.473801,54.704901'],
+             ['красноярск', '92.874172,56.023097'], ['рязань', '39.718238,54.670371'],
+             ['казань', '49.099982,55.767306'], ['псков', '28.358700,57.811740'], ['рим', '12.509593,41.894075'],
+             ['изборск', '27.862106,57.709340'], ['лос-анджелес', '-118.411708,34.019109'],
+             ['нью-йорк', '-73.979745,40.706902'], ['лондон', '-0.090420,51.491708'], ['марсель', '5.412660,43.304837'],
+             ['стокгольм', '17.980247,59.333793'], ['крым', '34.526191,45.226951'],
+             ['севастополь', '33.548088,44.584571'], ['мексика', '-102.572756,23.858231'],
+             ['тула', '37.618551,54.181173'],
+             ['ростов-на-дону', '39.628128,47.254342'], ['пекин', '116.341702,39.960675'],
+             ['орландо', '-81.393923,28.534487'], ['мадрид', '-3.703579,40.477905'], ['венеция', '12.338450,45.436982'],
+             ['милан', '9.156186,45.478322'], ['барселона', '2.140209,41.392710']]
 logging.basicConfig(filename='example2.log',
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -95,19 +97,24 @@ async def help_command(update, context):
 
 async def reader_find(update, context):
     chat_id = update.effective_message.chat_id
-    city = context.user_data['city']
+    city = context.user_data['city'][0]
     print(update.message.text.strip().lower(), city)
     if update.message.text.lower() == city:
         await update.message.reply_text(f"Да, это правильно, получи 50🪙\n"
                                         f"Хочешь продолжить игру? Нажми на кнопку", reply_markup=markup)
-
         db_sess = db_session.create_session()
         for money in db_sess.query(Money_user).filter(Money_user.user_id == update.message.chat.id):
             money.money += 50
         db_sess.commit()
     else:
-        await update.message.reply_text(f"Это неправильный ответ, это {city.capitalize()}\n"
-                                        f"Хочешь продолжить игру? Нажми на кнопку", reply_markup=markup)
+        places = context.user_data['city'][1]
+        map_request = f"https://static-maps.yandex.ru/1.x/?l=map&ll={places}&spn=1.000,1.000&l=map"
+        response = requests.get(map_request)
+        map_file = f"map.png"
+        with open(map_file, "wb") as file:
+            file.write(response.content)
+        await context.bot.send_photo(chat_id, 'map.png', reply_markup=markup,
+                                     caption=f"Это неправильный ответ, это {city.capitalize()}.\nВзгляни на этот город с высоты.\nХочешь продолжить игру? Нажми на кнопку", )
     return 1
 
 
@@ -118,10 +125,9 @@ async def find(update, context):
     if update.message.text in ["Да", "/find"]:
         city = choice(find_city)
         context.user_data['city'] = city
-        print(city)
-        await context.bot.send_photo(chat_id, f'data/{city}.jpg', reply_markup=ReplyKeyboardRemove(),
+        print(city[0])
+        await context.bot.send_photo(chat_id, f'data/{city[0]}.jpg', reply_markup=ReplyKeyboardRemove(),
                                      caption='Что это за город?')
-        print('отправлено')
         return 2
     else:
         await update.message.reply_text("Пока, ждем в гости! Вызывай новую команду, как понадоблюсь",
@@ -187,40 +193,13 @@ async def joke2(update, context):
             money.money += 50
         db_sess.commit()
         await update.message.reply_text(f"Ты использовал свой купон и получил 50🪙\n"
-                                            f"Хочешь продолжить обналичивать свои коды? Нажми на кнопку", reply_markup=markup)
+                                        f"Хочешь продолжить обналичивать свои коды? Нажми на кнопку",
+                                        reply_markup=markup)
     else:
         await update.message.reply_text(f"Я не знаю такого кода\n"
-                                            f"Хочешь продолжить обналичивать свои коды? Нажми на кнопку", reply_markup=markup)
+                                        f"Хочешь продолжить обналичивать свои коды? Нажми на кнопку",
+                                        reply_markup=markup)
     return 5
-
-
-async def finding_city(update, context):
-    if update.message.text in ["Да", "/finding_city"]:
-        await update.message.reply_text("Напиши мне координаты города, а я попробую найти его на карте")
-        return 8
-    else:
-        await update.message.reply_text("Пока, ждем в гости! Вызывай новую команду, как понадоблюсь",
-                                        reply_markup=ReplyKeyboardRemove())
-        return ConversationHandler.END
-
-
-async def finding_city2(update, context):
-    chat_id = update.effective_message.chat_id
-    if update.message.text:
-        places = update.message.text
-        map_request = f"https://static-maps.yandex.ru/1.x/?l=map&ll={places}&spn=1.000,1.000&l=map"
-        response = requests.get(map_request)
-        if not response:
-            print("Ошибка выполнения запроса:")
-            print(map_request)
-            print("Http статус:", response.status_code, "(", response.reason, ")")
-            sys.exit(1)
-        map_file = f"map.png"
-        with open(map_file, "wb") as file:
-            file.write(response.content)
-        await context.bot.send_photo(chat_id, f'map.png', caption="Хочешь продолжить игру? Нажми на кнопку",
-                                     reply_markup=markup)
-        return 7
 
 
 async def stop(update, context):
@@ -259,18 +238,9 @@ def main():
         },
         fallbacks=[CommandHandler('stop', stop)]
     )
-    conv_handler3 = ConversationHandler(
-        entry_points=[CommandHandler('finding_city', finding_city)],
-        states={
-            7: [MessageHandler(filters.TEXT & ~filters.COMMAND, finding_city)],
-            8: [MessageHandler(filters.TEXT & ~filters.COMMAND, finding_city2)]
-        },
-        fallbacks=[CommandHandler('stop', stop)]
-    )
     app.add_handler(conv_handler)
     app.add_handler(conv_handler1)
     app.add_handler(conv_handler2)
-    app.add_handler(conv_handler3)
     text_handler = MessageHandler(filters.TEXT, echo)
     app.add_handler(text_handler)
     app.run_polling()
