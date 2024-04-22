@@ -22,7 +22,7 @@ find_city = [['москва', '37.520657,55.650667'], ['одинцово', '37.2
              ['изборск', '27.862106,57.709340'], ['лос-анджелес', '-118.411708,34.019109'],
              ['нью-йорк', '-73.979745,40.706902'], ['лондон', '-0.090420,51.491708'], ['марсель', '5.412660,43.304837'],
              ['стокгольм', '17.980247,59.333793'], ['крым', '34.526191,45.226951'],
-             ['севастополь', '33.548088,44.584571'], ['мексика', '-102.572756,23.858231'],
+             ['севастополь', '33.548088,44.584571'], ['мехико', '-99.138654,19.374968'],
              ['тула', '37.618551,54.181173'],
              ['ростов-на-дону', '39.628128,47.254342'], ['пекин', '116.341702,39.960675'],
              ['орландо', '-81.393923,28.534487'], ['мадрид', '-3.703579,40.477905'], ['венеция', '12.338450,45.436982'],
@@ -46,7 +46,7 @@ dbs.commit()
 async def start(update, context):
     chat_id = update.effective_message.chat_id
     await context.bot.send_photo(chat_id, 'data/orig.webp', reply_markup=ReplyKeyboardRemove(),
-                                 caption=f"Привет! Я бот!\nЯ Напиши или выбери команду из меню")
+                                 caption=f"Привет! Я бот!\nНапиши или выбери команду из меню")
     user = update.effective_user
     db_sess = db_session.create_session()
     user1 = db_sess.query(User).filter(User.user_id == update.message.chat.id).first()
@@ -138,7 +138,7 @@ async def find(update, context):
 async def money(update, context):
     db_sess = db_session.create_session()
     for money in db_sess.query(Money_user).filter(Money_user.user_id == update.message.chat.id):
-        await update.message.reply_text(money.money)
+        await update.message.reply_text(f'В твоём распоряжении на данный момент {money.money}🪙')
 
 
 async def casino(update, context):
@@ -146,13 +146,20 @@ async def casino(update, context):
     for money in db_sess.query(Money_user).filter(Money_user.user_id == update.message.chat.id):
         if money.money > 0:
             if update.message.text in ["Да", "/casino"]:
-                await update.message.reply_text("Выбери ставку",
+                await update.message.reply_text(f"В твоём распоряжении на данный момент {money.money}🪙\nВыбери ставку",
                                                 reply_markup=markup1)
-    if update.message.text not in ["Да", "/casino"]:
-        await update.message.reply_text(
-            f'Я не понял твою команду "{update.message.text}", перезапусти бот\n(напиши /stop, а затем /start)\n'
-            f'и попробуй снова ввести свою команду\n'
-            f'(проследи за исправностью написания).\nЕсли не получается напиши команду\n/help (после перезапуска), \nнадеюсь она тебе поможет.')
+            elif update.message.text == 'Нет':
+                await update.message.reply_text("Пока, ждем в гости! Вызывай новую команду, как понадоблюсь",
+                                                reply_markup=ReplyKeyboardRemove())
+                return ConversationHandler.END
+            else:
+                await update.message.reply_text(
+                    f'Я не понял твою команду "{update.message.text}", перезапусти бот\n(напиши /stop, а затем /start)\n'
+                    f'и попробуй снова ввести свою команду\n'
+                    f'(проследи за исправностью написания).\nЕсли не получается напиши команду\n/help (после перезапуска), \nнадеюсь она тебе поможет.')
+        else:
+            await update.message.reply_text("У тебя закончились 🪙, поэтому ты не можешь играть в казино.\nТы можешь заработать 🪙 в /find или /play\nВызывай новую команду, как понадоблюсь",
+                                            reply_markup=ReplyKeyboardRemove())
     return 4
 
 
@@ -165,12 +172,12 @@ async def casino2(update, context):
             for money in db_sess.query(Money_user).filter(Money_user.user_id == update.message.chat.id):
                 money.money += 1
                 money.money *= int(text)
-            await update.message.reply_text(f"Ты везучий. Твои деньги увеличились в {text} раз\n"
+            await update.message.reply_text(f"Ты везучий. Твои 🪙 увеличились в {text} раз\n"
                                             f"Хочешь продолжить игру в казино? Нажми на кнопку", reply_markup=markup)
         else:
             for money in db_sess.query(Money_user).filter(Money_user.user_id == update.message.chat.id):
                 money.money //= int(text)
-            await update.message.reply_text(f"Ну, что ж, не повезло. Твои деньги уменьшились в {text} раз\n"
+            await update.message.reply_text(f"Ну, что ж, не повезло. Твои 🪙 уменьшились в {text} раз\n"
                                             f"Хочешь продолжить игру? Нажми на кнопку", reply_markup=markup)
         db_sess.commit()
     return 3
@@ -214,6 +221,7 @@ def main():
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("money", money))
     app.add_handler(CommandHandler("play", help_command))
+    app.add_handler(CommandHandler("stop", stop))
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('find', find)],
         states={
