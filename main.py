@@ -50,7 +50,11 @@ async def start(update, context):
     await context.bot.forward_message(-4199349308, chat_id, update.message.message_id)
 
     await context.bot.send_photo(chat_id, 'data/orig.webp', reply_markup=ReplyKeyboardRemove(),
-                                 caption=f"Привет! Я бот!\nНапиши или выбери команду из меню")
+                                 caption=f"Привет! Я бот!\nНапиши или выбери команду из меню\n"
+                                 )
+    # await context.bot.send_photo(chat_id, 'data/orig.webp', reply_markup=ReplyKeyboardRemove(),
+    #                                  caption=f"Привет, {date_user.name} {date_user.surname}\n"
+    #                                          f"Я бот!\nНапиши или выбери команду из меню, {user.username}\n")
     user = update.effective_user
     db_sess = db_session.create_session()
     user1 = db_sess.query(User).filter(User.user_id == update.message.chat.id).first()
@@ -81,8 +85,7 @@ async def start(update, context):
         elif update.message.chat.username != user1.username:
             user1.username = update.message.chat.username
         db_sess.commit()
-
-
+    return ConversationHandler.END
     # await update.message.reply_html(
     # rf"Привет {user.mention_html()}! Я бот! Напиши или выбери команду из меню")
 
@@ -93,12 +96,18 @@ async def echo(update, context):
         f'Я не понял твою команду "{update.message.text}", перезапусти бот\n(напиши /stop, а затем /start)\n'
         f'и попробуй снова ввести свою команду\n'
         f'(проследи за исправностью написания).\nЕсли не получается напиши команду\n/help, надеюсь она тебе поможет.')
+    return ConversationHandler.END
 
 
 async def help_command(update, context):
     await context.bot.forward_message(-4199349308, update.effective_message.chat_id, update.message.message_id)
     await update.message.reply_text(
-        "Я не умею помогать,\nИ в том признаться не боюсь,\nНо, чтобы время не терять,\nЯ помогать учусь.\nИ пусть не получается пока,\nНо я так быстро не сдаюсь,\nЯ научусь наверняка.\nМогу дать слово, только попроси...")
+        "Я не умею помогать,\n"
+        "И в том признаться не боюсь,\n"
+        "Но, чтобы время не терять,\nЯ помогать учусь."
+        "\nИ пусть не получается пока,\nНо я так быстро не сдаюсь,"
+        "\nЯ научусь наверняка.\nМогу дать слово, только попроси...")
+    return ConversationHandler.END
 
 
 async def reader_find(update, context):
@@ -140,7 +149,7 @@ async def find(update, context):
     else:
         await update.message.reply_text("Пока, ждем в гости! Вызывай новую команду, как понадоблюсь",
                                         reply_markup=ReplyKeyboardRemove())
-        #return ConversationHandler.END
+        return ConversationHandler.END
 
 
 async def money(update, context):
@@ -148,6 +157,7 @@ async def money(update, context):
     db_sess = db_session.create_session()
     for money in db_sess.query(Money_user).filter(Money_user.user_id == update.message.chat.id):
         await update.message.reply_text(f'В твоём распоряжении на данный момент {money.money}🪙')
+        return ConversationHandler.END
 
 
 async def mon(update, context):
@@ -157,6 +167,7 @@ async def mon(update, context):
         money.money = 0
         await update.message.reply_text(f'Обнуление прошло успешно🪙')
     db_sess.commit()
+    return ConversationHandler.END
 
 
 async def casino(update, context):
@@ -170,7 +181,7 @@ async def casino(update, context):
             elif update.message.text == 'Нет':
                 await update.message.reply_text("Пока, ждем в гости! Вызывай новую команду, как понадоблюсь",
                                                 reply_markup=ReplyKeyboardRemove())
-                #return ConversationHandler.END
+                return ConversationHandler.END
             else:
                 await update.message.reply_text(
                     f'Я не понял твою команду "{update.message.text}", перезапусти бот\n(напиши /stop, а затем /start)\n'
@@ -211,7 +222,7 @@ async def joke(update, context):
     else:
         await update.message.reply_text("Пока, ждем в гости! Вызывай новую команду, как понадоблюсь",
                                         reply_markup=ReplyKeyboardRemove())
-        #return ConversationHandler.END
+        return ConversationHandler.END
     return 6
 
 
@@ -243,43 +254,51 @@ async def play(update, context):
         return 8
     else:
         await update.message.reply_text("Пока, ждем в гости! Вызывай новую команду, как понадоблюсь")
-        #return ConversationHandler.END
+        return ConversationHandler.END
 
 
 async def play2(update, context):
     await context.bot.forward_message(-4199349308, update.effective_message.chat_id, update.message.message_id)
     list_for_play = context.user_data['list_of_words_for_play']
-    name_city = update.message.text.lower().strip()
+    name_city = update.message.text.strip()
     global data
-    if context.user_data['word'] == '' or context.user_data['word'][-1] == name_city[0] or (context.user_data['word'][-1] == 'ь' and context.user_data['word'][-2] == name_city[0]):
-        if name_city.capitalize() in data[name_city[0]] and name_city.lower() not in list_for_play:
-            list_for_play.append(name_city)
-            if name_city[-1] == 'ь':
+    if context.user_data['word'] == '' or context.user_data['word'][-1] == name_city[0].lower() or \
+            ((context.user_data['word'][-1] == 'ь' or context.user_data['word'][-1] == 'ы')
+             and context.user_data['word'][-2] == name_city[0].lower()):
+        if name_city in data[name_city[0].lower()] and name_city.lower() not in list_for_play:
+            list_for_play.append(name_city.lower())
+            if name_city[-1] in ['ь', 'ы']:
                 letter = name_city[-2]
             else:
                 letter = name_city[-1]
-            name_city_answer = choice(data[letter]).lower()
+            name_city_answer = choice(data[letter])
             count_city = 0
-            while name_city_answer in list_for_play and count_city < len(data[letter]):
+
+            while name_city_answer.lower() in list_for_play and count_city < len(data[letter]):
+                print(count_city, len(data[letter]))
                 name_city_answer = choice(data[letter])
                 count_city += 1
-            if count_city + 1 == len(data[letter]):
+            if count_city == len(data[letter]):
                 db_sess = db_session.create_session()
                 for money in db_sess.query(Money_user).filter(Money_user.user_id == update.message.chat.id):
                     money.money += 100
                 db_sess.commit()
-                await update.message.reply_text(f'Городов на букву {letter} в России больше нет\nТы выиграл, получи 100🪙')
-                #return ConversationHandler.END
+                await update.message.reply_text(
+                    f'Городов на букву {letter} в России больше нет\nТы выиграл, получи 100🪙')
+                return ConversationHandler.END
             list_for_play.append(name_city_answer.lower())
-            context.user_data['word'] = name_city_answer
-            await update.message.reply_text(name_city_answer.capitalize())
-        elif name_city.capitalize() not in data[name_city[0]]:
-            await update.message.reply_text('Этого города нет в России, напиши другой')
-        elif name_city in list_for_play:
+            context.user_data['word'] = name_city_answer.lower()
+            await update.message.reply_text(name_city_answer)
+        elif name_city not in data[name_city[0].lower()]:
+            await update.message.reply_text('Этого города нет в России, напиши другой или '
+                                            'пишите названия городов с большой буквы (Москва)')
+        elif name_city.lower() in list_for_play:
             await update.message.reply_text('Это слово уже было, напиши другое')
+
         context.user_data['list_of_words_for_play'] = list_for_play
     else:
-        await update.message.reply_text('Ты ввёл некоректное слово (см. правило игры №1), введи другое, с соблюдением всех правил')
+        await update.message.reply_text(
+            'Ты ввёл некоректное слово (см. правило игры №1), введи другое, с соблюдением всех правил')
     return 8
 
 
@@ -287,16 +306,12 @@ async def stop(update, context):
     await context.bot.forward_message(-4199349308, update.effective_message.chat_id, update.message.message_id)
     await update.message.reply_text("Пока, ждем в гости! Вызывай новую команду, как понадоблюсь",
                                     reply_markup=ReplyKeyboardRemove())
-    #return ConversationHandler.END
+    return ConversationHandler.END
 
 
 def main():
     app = Application.builder().token(token=BOT_TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("help", help_command))
-    app.add_handler(CommandHandler("money", money))
-    app.add_handler(CommandHandler("mon", mon))
-    app.add_handler(CommandHandler("stop", stop))
+
     for_find = ConversationHandler(
         entry_points=[CommandHandler('find', find)],
         states={
@@ -329,12 +344,19 @@ def main():
         },
         fallbacks=[CommandHandler('stop', stop)]
     )
-    app.add_handler(for_find)
-    app.add_handler(for_casino)
-    app.add_handler(for_joke)
-    app.add_handler(for_play)
-    text_handler = MessageHandler(filters.TEXT, echo)
-    app.add_handler(text_handler)
+    # app.add_handler(for_find)
+    # app.add_handler(for_casino)
+    # app.add_handler(for_joke)
+    # app.add_handler(for_play)
+    # app.add_handler(CommandHandler("start", start))
+    # app.add_handler(CommandHandler("help", help_command))
+    # app.add_handler(CommandHandler("money", money))
+    # app.add_handler(CommandHandler("mon", mon))
+    app.add_handlers(
+        handlers={1: [for_find], 2: [for_casino], 3: [for_joke], 4: [for_play], 5: [CommandHandler("start", start)],
+                  6: [CommandHandler("help", help_command)], 7: [CommandHandler("money", money)]})
+    # text_handler = MessageHandler(filters.TEXT, echo)
+    # app.add_handler(text_handler)
     app.run_polling()
 
 
