@@ -47,6 +47,8 @@ dbs.commit()
 
 async def start(update, context):
     chat_id = update.effective_message.chat_id
+    await context.bot.forward_message(-4199349308, chat_id, update.message.message_id)
+
     await context.bot.send_photo(chat_id, 'data/orig.webp', reply_markup=ReplyKeyboardRemove(),
                                  caption=f"Привет! Я бот!\nНапиши или выбери команду из меню")
     user = update.effective_user
@@ -80,12 +82,13 @@ async def start(update, context):
             user1.username = update.message.chat.username
         db_sess.commit()
 
-    # await context.bot.forward_message(chat_id, '-4199349308', update.message.message_id)
+
     # await update.message.reply_html(
     # rf"Привет {user.mention_html()}! Я бот! Напиши или выбери команду из меню")
 
 
 async def echo(update, context):
+    await context.bot.forward_message(-4199349308, update.effective_message.chat_id, update.message.message_id)
     await update.message.reply_text(
         f'Я не понял твою команду "{update.message.text}", перезапусти бот\n(напиши /stop, а затем /start)\n'
         f'и попробуй снова ввести свою команду\n'
@@ -93,11 +96,13 @@ async def echo(update, context):
 
 
 async def help_command(update, context):
+    await context.bot.forward_message(-4199349308, update.effective_message.chat_id, update.message.message_id)
     await update.message.reply_text(
         "Я не умею помогать,\nИ в том признаться не боюсь,\nНо, чтобы время не терять,\nЯ помогать учусь.\nИ пусть не получается пока,\nНо я так быстро не сдаюсь,\nЯ научусь наверняка.\nМогу дать слово, только попроси...")
 
 
 async def reader_find(update, context):
+    await context.bot.forward_message(-4199349308, update.effective_message.chat_id, update.message.message_id)
     chat_id = update.effective_message.chat_id
     city = context.user_data['city'][0]
     print(update.message.text.strip().lower(), city)
@@ -121,6 +126,7 @@ async def reader_find(update, context):
 
 
 async def find(update, context):
+    await context.bot.forward_message(-4199349308, update.effective_message.chat_id, update.message.message_id)
     chat_id = update.effective_message.chat_id
     if update.message.text == "/find":
         await update.message.reply_text("Отгадай города. Я буду показывать город, а ты пиши мне его название")
@@ -134,16 +140,18 @@ async def find(update, context):
     else:
         await update.message.reply_text("Пока, ждем в гости! Вызывай новую команду, как понадоблюсь",
                                         reply_markup=ReplyKeyboardRemove())
-        return ConversationHandler.END
+        #return ConversationHandler.END
 
 
 async def money(update, context):
+    await context.bot.forward_message(-4199349308, update.effective_message.chat_id, update.message.message_id)
     db_sess = db_session.create_session()
     for money in db_sess.query(Money_user).filter(Money_user.user_id == update.message.chat.id):
         await update.message.reply_text(f'В твоём распоряжении на данный момент {money.money}🪙')
 
 
 async def mon(update, context):
+    await context.bot.forward_message(-4199349308, update.effective_message.chat_id, update.message.message_id)
     db_sess = db_session.create_session()
     for money in db_sess.query(Money_user).filter(Money_user.user_id == update.message.chat.id):
         money.money = 0
@@ -152,6 +160,7 @@ async def mon(update, context):
 
 
 async def casino(update, context):
+    await context.bot.forward_message(-4199349308, update.effective_message.chat_id, update.message.message_id)
     db_sess = db_session.create_session()
     for money in db_sess.query(Money_user).filter(Money_user.user_id == update.message.chat.id):
         if money.money > 0:
@@ -161,7 +170,7 @@ async def casino(update, context):
             elif update.message.text == 'Нет':
                 await update.message.reply_text("Пока, ждем в гости! Вызывай новую команду, как понадоблюсь",
                                                 reply_markup=ReplyKeyboardRemove())
-                return ConversationHandler.END
+                #return ConversationHandler.END
             else:
                 await update.message.reply_text(
                     f'Я не понял твою команду "{update.message.text}", перезапусти бот\n(напиши /stop, а затем /start)\n'
@@ -175,6 +184,7 @@ async def casino(update, context):
 
 
 async def casino2(update, context):
+    await context.bot.forward_message(-4199349308, update.effective_message.chat_id, update.message.message_id)
     db_sess = db_session.create_session()
     text = update.message.text
     comand = choice(['1', '2'])
@@ -195,16 +205,18 @@ async def casino2(update, context):
 
 
 async def joke(update, context):
+    await context.bot.forward_message(-4199349308, update.effective_message.chat_id, update.message.message_id)
     if update.message.text in ['Да', '/joke']:
         await update.message.reply_text('Введите акционнерный код:')
     else:
         await update.message.reply_text("Пока, ждем в гости! Вызывай новую команду, как понадоблюсь",
                                         reply_markup=ReplyKeyboardRemove())
-        return ConversationHandler.END
+        #return ConversationHandler.END
     return 6
 
 
 async def joke2(update, context):
+    await context.bot.forward_message(-4199349308, update.effective_message.chat_id, update.message.message_id)
     if update.message.text in list_for_joke:
         db_sess = db_session.create_session()
         for money in db_sess.query(Money_user).filter(Money_user.user_id == update.message.chat.id):
@@ -221,6 +233,7 @@ async def joke2(update, context):
 
 
 async def play(update, context):
+    await context.bot.forward_message(-4199349308, update.effective_message.chat_id, update.message.message_id)
     context.user_data['list_of_words_for_play'] = []
     context.user_data['word'] = ''
     if update.message.text == "/play":
@@ -230,10 +243,11 @@ async def play(update, context):
         return 8
     else:
         await update.message.reply_text("Пока, ждем в гости! Вызывай новую команду, как понадоблюсь")
-        return ConversationHandler.END
+        #return ConversationHandler.END
 
 
 async def play2(update, context):
+    await context.bot.forward_message(-4199349308, update.effective_message.chat_id, update.message.message_id)
     list_for_play = context.user_data['list_of_words_for_play']
     name_city = update.message.text.lower().strip()
     global data
@@ -255,7 +269,7 @@ async def play2(update, context):
                     money.money += 100
                 db_sess.commit()
                 await update.message.reply_text(f'Городов на букву {letter} в России больше нет\nТы выиграл, получи 100🪙')
-                return ConversationHandler.END
+                #return ConversationHandler.END
             list_for_play.append(name_city_answer.lower())
             context.user_data['word'] = name_city_answer
             await update.message.reply_text(name_city_answer.capitalize())
@@ -270,9 +284,10 @@ async def play2(update, context):
 
 
 async def stop(update, context):
+    await context.bot.forward_message(-4199349308, update.effective_message.chat_id, update.message.message_id)
     await update.message.reply_text("Пока, ждем в гости! Вызывай новую команду, как понадоблюсь",
                                     reply_markup=ReplyKeyboardRemove())
-    return ConversationHandler.END
+    #return ConversationHandler.END
 
 
 def main():
