@@ -29,7 +29,7 @@ find_city = [['москва', '37.520657,55.650667'], ['одинцово', '37.2
 logging.basicConfig(filename='logging_file.log',
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-list_for_joke = ['A', '12', '24.04.24']
+list_for_joke = ['A', '12', '24.04.24', 'С днем рождения!', '24.04', 'Самый лучший бот!', 'А можно премию?', 'ВИБР']
 
 with open('city.json', encoding='utf-8') as file:
     data = json.load(file)
@@ -46,16 +46,15 @@ dbs.commit()
 
 
 async def start(update, context):
+    global list_for_joke
+    context.user_data["list_for_joke"] = list_for_joke
     chat_id = update.effective_message.chat_id
     await context.bot.forward_message(-4199349308, chat_id, update.message.message_id)
-
-    await context.bot.send_photo(chat_id, 'data/orig.webp', reply_markup=ReplyKeyboardRemove(),
-                                 caption=f"Привет! Я бот!\nНапиши или выбери команду из меню\n"
-                                 )
-    # await context.bot.send_photo(chat_id, 'data/orig.webp', reply_markup=ReplyKeyboardRemove(),
-    #                                  caption=f"Привет, {date_user.name} {date_user.surname}\n"
-    #                                          f"Я бот!\nНапиши или выбери команду из меню, {user.username}\n")
     user = update.effective_user
+    await context.bot.send_photo(chat_id, 'data/orig.webp', reply_markup=ReplyKeyboardRemove(),
+                                 caption=f"Привет, {update.message.chat.first_name}! Я бот!\nНапиши или выбери команду из меню\n"
+                                 )
+
     db_sess = db_session.create_session()
     user1 = db_sess.query(User).filter(User.user_id == update.message.chat.id).first()
     if not user1:
@@ -101,7 +100,39 @@ async def echo(update, context):
 
 async def help_command(update, context):
     await context.bot.forward_message(-4199349308, update.effective_message.chat_id, update.message.message_id)
+    db_sess = db_session.create_session()
+    date = db_sess.query(Date_user).filter(Date_user.user_id == update.message.chat.id).first()
     await update.message.reply_text(
+        f"{date.name} {date.surname},\n"
+        "Друг друга трудно нам понять,\n"
+        "С тобой мы что-то не в ладу\n"
+        "Надеюсь, помогу тебе сейчас\n"
+        "---\n"
+        "Для начала немного о функционале бота\n\n"
+        "/start - запуск бота\n"
+        "/money - нужна, чтобы узнать количество 🪙\n"
+        "/find - игра 'угадай город по фото'\n"
+        "/play -  игра 'в города'\n"
+        "/casino - казино\n"
+        "/joke - розыгрыши\n"
+        "/stop - завершение игры, нужно нажимать, если ты хочешь прервать игру\n\n"
+        "Теперь расскажу тебе о суть бота:\n"
+        "В нем 2 главных раздела, которые сочетают в себе игры разных жанров: города, деньги-деньги – дребеденьги.\n"
+        "В игре города (/play) бот играет с пользователем до тех пор, пока тот не захочет остановиться, или пока у "
+        "кого-нибудь не закончатся слова.\n"
+        "В игре угадай город (/find) пользователю даётся город и ему нужно определить, что за город изображён на "
+        "фотографиях. За каждый правильный ответ в разделе города пользователь получает деньги, с помощью которых может "
+        "играть в игры в разделе деньги-деньги – дребеденьги.\n"
+        "В разделе деньги-деньги – дребеденьги пользователь может разделе казино (/casino) испытать удачу и выиграть "
+        "деньги. Он выбирает сумму, бот ему пишет заработал или проиграл он свои деньги.\n"
+        "В игре розыгрыши (/joke) будут розыгрыши, в которых пользователь может выиграть и получить деньги.\n"
+        "Это был сюжет бота, а теперь расскажу, что делать, если что-то вдруг пойдёт не так\n"
+        "Попробуй сделать так\n"
+        "перезапусти бот\n(напиши /stop, а затем /start)\n"
+        "и попробуй снова ввести свою команду\n"
+        "(проследи за исправностью написания).\n"
+        "Надеюсь я помог тебе и ты нашёл тут ответ на свой вопрос, если нет попробуй ещё раз ВНИМАТЕЛЬНО перечитать\n"
+        "---\n"
         "Я не умею помогать,\n"
         "И в том признаться не боюсь,\n"
         "Но, чтобы время не терять,\nЯ помогать учусь."
@@ -138,7 +169,9 @@ async def find(update, context):
     await context.bot.forward_message(-4199349308, update.effective_message.chat_id, update.message.message_id)
     chat_id = update.effective_message.chat_id
     if update.message.text == "/find":
-        await update.message.reply_text("Отгадай города. Я буду показывать город, а ты пиши мне его название")
+        db_sess = db_session.create_session()
+        date = db_sess.query(Date_user).filter(Date_user.user_id == update.message.chat.id).first()
+        await update.message.reply_text(f"{date.name} {date.surname}, отгадай города. Я буду показывать город, а ты пиши мне его название")
     if update.message.text in ["Да", "/find"]:
         city = choice(find_city)
         context.user_data['city'] = city
@@ -147,7 +180,7 @@ async def find(update, context):
                                      caption='Что это за город?')
         return 2
     else:
-        await update.message.reply_text("Пока, ждем в гости! Вызывай новую команду, как понадоблюсь",
+        await update.message.reply_text("Ты завершил эту игру! Вызывай новую команду",
                                         reply_markup=ReplyKeyboardRemove())
         return ConversationHandler.END
 
@@ -220,7 +253,7 @@ async def joke(update, context):
     if update.message.text in ['Да', '/joke']:
         await update.message.reply_text('Введите акционнерный код:')
     else:
-        await update.message.reply_text("Пока, ждем в гости! Вызывай новую команду, как понадоблюсь",
+        await update.message.reply_text("Ты завершил эту игру! Вызывай новую команду",
                                         reply_markup=ReplyKeyboardRemove())
         return ConversationHandler.END
     return 6
@@ -228,7 +261,9 @@ async def joke(update, context):
 
 async def joke2(update, context):
     await context.bot.forward_message(-4199349308, update.effective_message.chat_id, update.message.message_id)
+    list_for_joke = context.user_data["list_for_joke"]
     if update.message.text in list_for_joke:
+        list_for_joke.remove(update.message.text)
         db_sess = db_session.create_session()
         for money in db_sess.query(Money_user).filter(Money_user.user_id == update.message.chat.id):
             money.money += 50
@@ -240,6 +275,7 @@ async def joke2(update, context):
         await update.message.reply_text(f"Я не знаю такого кода\n"
                                         f"Хочешь продолжить обналичивать свои коды? Нажми на кнопку",
                                         reply_markup=markup)
+    context.user_data["list_for_joke"] = list_for_joke
     return 5
 
 
@@ -249,11 +285,13 @@ async def play(update, context):
     context.user_data['word'] = ''
     if update.message.text == "/play":
         print(1)
+        db_sess = db_session.create_session()
+        date = db_sess.query(Date_user).filter(Date_user.user_id == update.message.chat.id).first()
         await update.message.reply_text(
-            "Поиграем в города России!\nТы начинаешь.\nПравила очень просты\n0.Все города, которые можно называть, только из России.\n1.Город, который тебе нужно назвать, начинается на последную букву предшесвующего города и удовлетворяет правилу № 0, КРОМЕ ПЕРВОГО\n2.Первый город ты можешь назвать любой, удовлетворяющий правилу №0\n3. Чтобы прекратить игру напиши (или выбери из меню) /stop")
+            f"{date.name} {date.surname}, поиграем в города России!\nТы начинаешь.\nПравила очень просты\n0.Все города, которые можно называть, только из России.\n1.Город, который тебе нужно назвать, начинается на последную букву предшесвующего города и удовлетворяет правилу № 0, КРОМЕ ПЕРВОГО\n2.Первый город ты можешь назвать любой, удовлетворяющий правилу №0\n3. Чтобы прекратить игру напиши (или выбери из меню) /stop")
         return 8
     else:
-        await update.message.reply_text("Пока, ждем в гости! Вызывай новую команду, как понадоблюсь")
+        await update.message.reply_text("Ты завершил эту игру! Вызывай новую команду")
         return ConversationHandler.END
 
 
@@ -304,7 +342,7 @@ async def play2(update, context):
 
 async def stop(update, context):
     await context.bot.forward_message(-4199349308, update.effective_message.chat_id, update.message.message_id)
-    await update.message.reply_text("Пока, ждем в гости! Вызывай новую команду, как понадоблюсь",
+    await update.message.reply_text("Ты завершил эту игру! Вызывай новую команду",
                                     reply_markup=ReplyKeyboardRemove())
     return ConversationHandler.END
 
